@@ -2,20 +2,27 @@
 import numpy as np
 import librosa
 
-# Load the example clip
+# サンプルのファイルをロード
+# y：波形
+# sr：サンプリングレート
 y, sr = librosa.load(librosa.util.example_audio_file())
 
-# Set the hop length; at 22050 Hz, 512 samples ~= 23ms
+# hop lengthは１フレームあたりのサンプル数
+# sr = 22050 Hz, hop512 samples ~= 23ms
 hop_length = 512
 
-# Separate harmonics and percussives into two waveforms
+# 音声を調波音と打楽器音に分割
+# y_harmonic：調波音
+# y_percussive：打楽器音
 y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-# Beat track on the percussive signal
+# ビート情報
+# tempo：BPM
+# beat_frames：ビートのタイミングのフレーム
 tempo, beat_frames = librosa.beat.beat_track(y=y_percussive,
                                              sr=sr)
 
-# Compute MFCC features from the raw signal
+# MFCC(メル周波数ケプストラム)の算出
 mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=13)
 
 # And the first-order differences (delta features)
