@@ -1,6 +1,9 @@
-# Feature extraction example
-import numpy as np
 import librosa
+import librosa.display
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 # サンプルのファイルをロード
 # y：波形
@@ -25,23 +28,33 @@ tempo, beat_frames = librosa.beat.beat_track(y=y_percussive,
 # MFCC(メル周波数ケプストラム)の算出
 mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=13)
 
-# And the first-order differences (delta features)
+# And the first-order differences (delta features)?
 mfcc_delta = librosa.feature.delta(mfcc)
 
-# Stack and synchronize between beat events
-# This time, we'll use the mean value (default) instead of median
+# mfccとmfcc_deltaをペアにする(np.vstack)
+# これをビートに同期させる
+# これによりビート間でmfccの平均を取る等可能に
 beat_mfcc_delta = librosa.util.sync(np.vstack([mfcc, mfcc_delta]),
                                     beat_frames)
 
-# Compute chroma features from the harmonic signal
+# 調波音からクロマ(12半音)情報の取得
+# これはある時刻の調波音に含まれる12半音(C,D,...,B)の強度を表す
 chromagram = librosa.feature.chroma_cqt(y=y_harmonic,
                                         sr=sr)
 
-# Aggregate chroma features between beat events
-# We'll use the median value of each feature between beat frames
+# *クロマグラムの表示                                        
+plt.figure(figsize=(6,4))
+librosa.display.specshow(chromagram, x_axis='time', y_axis='chroma')
+plt.title('Chromagram')
+plt.colorbar()
+plt.tight_layout()
+plt.show()
+
+# 今回はクロマ情報をビートに同期させる
+# 'aggregate'は「集計」という意味、おそらくビート間でクロマ情報の代表値を算出する方法？
 beat_chroma = librosa.util.sync(chromagram,
                                 beat_frames,
                                 aggregate=np.median)
 
-# Finally, stack all beat-synchronous features together
+# ビートに同期したクロマ情報, mfcc, mfcc_deltaをすべて連結
 beat_features = np.vstack([beat_chroma, beat_mfcc_delta])
